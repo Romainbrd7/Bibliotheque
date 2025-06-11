@@ -2,84 +2,103 @@ using Microsoft.AspNetCore.Mvc;
 using API.Models;
 using API.Repositories;
 using System.Text.Json;
-using System.ComponentModel.DataAnnotations;
 
-namespace API.Controllers;
-
-[ApiController]
-[Route("[controller]")]
-public class LivresController : ControllerBase
+namespace API.Controllers
 {
-    private readonly Repository<Media> _repository;
-
-    public LivresController()
+    [ApiController]
+    [Route("[controller]")]
+    public class LivresController : ControllerBase
     {
-        _repository = new Repository<Media>(); // Simule un "injectable" en mémoire
-    }
+        private readonly IMediaRepository _repository;
 
-    [HttpGet]
-    public ActionResult<IEnumerable<Media>> GetAll([FromQuery] string? author, [FromQuery] string? title, [FromQuery] string? sort)
-    {
-        var items = _repository.GetAll();
-
-        if (!string.IsNullOrEmpty(author))
-            items = items.Where(x => x.Author.Contains(author, StringComparison.OrdinalIgnoreCase));
-
-        if (!string.IsNullOrEmpty(title))
-            items = items.Where(x => x.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
-
-        if (!string.IsNullOrEmpty(sort))
+        public LivresController(IMediaRepository repository)
         {
-            items = sort.ToLower() switch
-            {
-                "author" => items.OrderBy(x => x.Author),
-                "title" => items.OrderBy(x => x.Title),
-                _ => items
-            };
+            _repository = repository;
         }
 
-        return Ok(items);
-    }
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Media>>> GetAll([FromQuery] string? author, [FromQuery] string? title)
+        {
+            var livres = await _repository.GetAllAsync(author, title);
+            return Ok(livres);
+        }
 
-    [HttpGet("{id}")]
-    public ActionResult<Media> Get(int id)
-    {
-        var item = _repository.Get(id);
-        return item == null ? NotFound() : Ok(item);
-    }
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Media>> Get(int id)
+        {
+            var livre = await _repository.GetByIdAsync(id);
+            if (livre == null)
+                return NotFound();
+            return Ok(livre);
+        }
 
-    [HttpPost]
-    public IActionResult Post([FromBody] JsonElement json)
+        [HttpPost]
+public async Task<ActionResult<Media>> Create([FromBody] JsonElement json)
+{
+    if (!json.TryGetProperty("type", out var typeProp))
+        return BadRequest("Le champ 'type' est requis (ebook ou paperbook)");
+
+    var type = typeProp.GetString();
+    Media media = type switch
     {
+        "ebook" => JsonSerializer.Deserialize<Ebook>(json.ToString())!,
+        "paperbook" => JsonSerializer.Deserialize<PaperBook>(json.ToString())!,
+        _ => throw new ArgumentException("Type de média inconnu")
+    };
+
+    // 🔍 Validation manuelle
+    if (string.IsNullOrWhiteSpace(media.Title))
+    return BadRequest("❌ Titre manquant ou vide.");
+if (string.IsNullOrWhiteSpace(media.Author))
+    return BadRequest("❌ Auteur manquant ou vide.");
+if (media.Year < 1800 || media.Year > 2100)
+    return BadRequest("❌ Année invalide.");
+
+
+    await _repository.AddAsync(media);
+    return CreatedAtAction(nameof(Get), new { id = media.Id }, media);
+}
+
+
+        [HttpPut("{id}")]
+public async Task<IActionResult> Update(int id, [FromBody] JsonElement json)
+{
+    try
+    {
+        var existing = await _repository.GetByIdAsync(id);
+        if (existing == null)
+            return NotFound();
+
         if (!json.TryGetProperty("type", out var typeProp))
-        {
-            return BadRequest("Le champ 'type' est requis (ebook ou paperbook).");
-        }
+            return BadRequest("Le champ 'type' est requis pour la mise à jour");
 
         var type = typeProp.GetString();
-        var jsonRaw = json.GetRawText();
-
-        Media? media = type?.ToLower() switch
+        Media updated = type switch
         {
-            "ebook" => JsonSerializer.Deserialize<Ebook>(jsonRaw),
-            "paperbook" => JsonSerializer.Deserialize<PaperBook>(jsonRaw),
-            _ => null
+            "ebook" => JsonSerializer.Deserialize<Ebook>(json.ToString())!,
+            "paperbook" => JsonSerializer.Deserialize<PaperBook>(json.ToString())!,
+            _ => throw new ArgumentException("Type de média inconnu")
         };
 
-        if (media == null)
-        {
-            return BadRequest("Type non reconnu ou désérialisation échouée.");
-        }
+        updated.Id = id;
+        await _repository.UpdateAsync(updated);
+        return NoContent();
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, $"Erreur côté serveur : {ex.Message}");
+    }
+}
 
-        // 🔍 VALIDATION MANUELLE
-        var validationContext = new ValidationContext(media);
-        var results = new List<ValidationResult>();
-        if (!Validator.TryValidateObject(media, validationContext, results, true))
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
-            return BadRequest(results);
-        }
+            var existing = await _repository.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound();
 
-        _repository.Add(media);
-        return CreatedAtAction(nameof(Get), new { id = media.Id }, media);
+            await _repository.DeleteAsync(id);
+            return NoContent();
+        }
     }
 }

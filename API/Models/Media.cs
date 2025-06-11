@@ -1,11 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace API.Models;
-
-public abstract class Media
+namespace API.Models
 {
-    [JsonPropertyName("id")]
+    public abstract class Media : IReadable
+{
     public int Id { get; set; }
 
     [Required]
@@ -20,5 +19,10 @@ public abstract class Media
     [JsonPropertyName("year")]
     public int Year { get; set; }
 
+    [JsonPropertyName("type")]
+    public string Type => GetType().Name.ToLower(); // "ebook" ou "paperbook"
+
     public abstract string DisplayInformation();
+}
+
 }
