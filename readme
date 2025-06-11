@@ -1,0 +1,74 @@
+
+📚 Gestionnaire de Bibliothèque Numérique
+
+Projet de fin de module en C# – Hexagone (2025)
+
+🧩 Description
+
+Ce projet a pour objectif de créer une API REST en ASP.Net Core permettant la gestion d'une bibliothèque numérique, intégrant à la fois des livres papier et électroniques. Un client en ligne de commande (console) permet ensuite d’interagir avec cette API pour réaliser des opérations CRUD.
+
+🧠 Fonctionnalités
+
+✅ API REST (.NET Core)
+- GET /livres : liste de tous les livres
+- GET /livres?q=Author=<auteur>&Title=<titre>&sort=author|title : recherche filtrée
+- GET /livres/{id} : récupérer un livre par son ID
+- POST /livres : ajouter un livre (ebook ou paperbook)
+- PUT /livres/{id} : modifier un livre
+- DELETE /livres/{id} : supprimer un livre
+
+L’API repose sur :
+- Une base de données SQLite
+- Le modèle objet suivant :
+  - Classe de base : Media
+  - Classes dérivées : Ebook, PaperBook
+  - Interface : IReadable avec la méthode DisplayInformation()
+- Un Repository<T> générique
+- Des DataAnnotations pour valider les champs
+
+💻 Client Console (individuel)
+Interface simple en ligne de commande permettant :
+- Affichage de tous les livres
+- Recherche par titre ou auteur
+- Ajout d’un livre (avec distinction entre ebook et paperbook)
+- Modification d’un livre
+- Suppression d’un livre
+
+Le client utilise :
+- HttpClient
+- Appels async/await
+- Gestion des erreurs try/catch
+
+🛠️ Lancer le projet
+
+1. API
+cd API
+dotnet build
+dotnet run
+
+Swagger : accessible à l’adresse https://localhost:5062/swagger
+
+2. Client Console
+
+Dans un second terminal :
+cd Client
+dotnet run
+
+📂 Organisation Git
+
+- main : branche finale notée
+- romain : branche de développement personnelle
+- Toutes les modifications ont été fusionnées sur main
+
+👨‍💻 Auteurs
+
+- Romain [Hexagone Versailles – 2025]
+
+📝 Remarques
+
+- L’ensemble du projet respecte les consignes pédagogiques et techniques :
+  - MVC, POO, validation, Swagger, client indépendant
+- Aucun code généré par IA. L’IA a uniquement servi d’aide à la compréhension.
+
+📅 Date de rendu : 11 juin 2025
+📧 Contact encadrant : bertrand.couprie@ecole-hexagone.com
