@@ -45,7 +45,6 @@ namespace API.Repositories
 
         public async Task UpdateAsync(Media media)
 {
-    // Détacher l'éventuel doublon déjà tracké
     var tracked = _context.ChangeTracker.Entries<Media>()
         .FirstOrDefault(e => e.Entity.Id == media.Id);
 
