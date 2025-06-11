@@ -57,12 +57,14 @@ dotnet run
 📂 Organisation Git
 
 - main : branche finale notée
-- romain : branche de développement personnelle
+- romain : branche de developpement pour Romain
+- nino : branche de developpement pour Nino
 - Toutes les modifications ont été fusionnées sur main
 
 👨‍💻 Auteurs
 
-- Romain [Hexagone Versailles – 2025]
+- Romain 
+- Nino
 
 📝 Remarques
 
